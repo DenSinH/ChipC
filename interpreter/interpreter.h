@@ -1,6 +1,8 @@
 #ifndef CHIP8_INTERPRETER_H
 #define CHIP8_INTERPRETER_H
 
+#include <stdbool.h>
+
 #define WIDTH 64
 #define HEIGHT 32
 #define SCALE 4
@@ -10,12 +12,16 @@
 
 typedef struct {
     unsigned int registers[16];
-    unsigned short int I;
-    unsigned short int dt, st;
-    unsigned short int pc;
+    unsigned short I;
+    unsigned char dt, st;
+    unsigned short pc;
+
+    unsigned short sp;  // we put the stack in the lower 0x200 bytes of the memory (should be enough I reckon)
 
     unsigned char mem[0x1000];
-    unsigned int display[WIDTH * HEIGHT];
+    bool display[WIDTH * HEIGHT];
+    int raw_bitmap[SCREEN_WIDTH * SCREEN_HEIGHT];
+    bool keyboard[16];
 } s_interpreter;
 
 

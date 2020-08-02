@@ -5,6 +5,6 @@
 
 bool init_display(int width, int height);
 void close_display();
-bool blit_bitmap_32bppRGBA();
+bool blit_bitmap_32bppRGBA(int raw[], int width, int height);
 
 #endif //HELLOWORLD_WINDOW_H
