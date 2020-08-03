@@ -19,11 +19,9 @@ typedef struct {
     unsigned short sp;  // we put the stack in the lower 0x200 bytes of the memory (should be enough I reckon)
 
     unsigned char mem[0x1000];
-    bool display[WIDTH * HEIGHT];
-    int raw_bitmap[SCREEN_WIDTH * SCREEN_HEIGHT];
+    int display[WIDTH * HEIGHT];
     bool keyboard[16];
 } s_interpreter;
-
 
 s_interpreter* init_interpreter();
 int run(s_interpreter* Interpreter);

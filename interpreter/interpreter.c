@@ -14,6 +14,8 @@
 char keys[] = "x123qweasdzc4rfv";
 const struct timespec frame_delay = {.tv_sec = 0, .tv_nsec = 16000000 };  // 16ms
 
+const SDL_Rect display_rect = {.w = WIDTH, .h = HEIGHT};
+
 unsigned char digits[] = {
     0xf0, 0x90, 0x90, 0x90, 0xf0,
     0x20, 0x60, 0x20, 0x20, 0x70,
@@ -68,23 +70,6 @@ void open_rom(s_interpreter* interpreter, char file_name[]) {
     }
 
     printf("Read %i bytes\n", fsize);
-}
-
-void blit_screen(s_interpreter* interpreter) {
-    for (int y = 0; y < WIDTH; y++) {
-        for (int x = 0; x < HEIGHT; x++) {
-            int color = interpreter->display[WIDTH * y + x] ? ON_COLOR : OFF_COLOR;
-
-            for (int dy = 0; dy < SCALE; dy++) {
-                for (int dx = 0; dx < SCALE; dx++) {
-                    interpreter->raw_bitmap[SCREEN_WIDTH * y + SCREEN_WIDTH * dy + SCALE * x + dx] = color;
-                }
-            }
-
-        }
-    }
-
-    // blit_bitmap_32bppRGBA(interpreter->raw_bitmap, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
 void push(s_interpreter* interpreter) {
@@ -343,7 +328,8 @@ int run(s_interpreter* interpreter) {
         }
 
         step(interpreter);
-        blit_screen(interpreter);
+
+        blit_bitmap_32bppRGBA(interpreter->display, display_rect);
         nanosleep(&frame_delay, NULL);
     }
 

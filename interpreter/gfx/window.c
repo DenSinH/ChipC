@@ -9,6 +9,8 @@ SDL_Window* gWindow = NULL;
 //The surface contained by the window
 SDL_Surface* gScreenSurface = NULL;
 
+SDL_Rect _screen_rect;
+
 bool init_display(int width, int height)
 {
     //Initialization flag
@@ -33,6 +35,10 @@ bool init_display(int width, int height)
         {
             //Get window surface
             gScreenSurface = SDL_GetWindowSurface( gWindow );
+            _screen_rect.x = 0;
+            _screen_rect.y = 0;
+            _screen_rect.w = width;
+            _screen_rect.h = height;
         }
     }
 
@@ -49,13 +55,13 @@ void close_display()
     SDL_Quit();
 }
 
-bool blit_bitmap_32bppRGBA(int raw[], int width, int height) {
+bool blit_bitmap_32bppRGBA(int raw[], SDL_Rect src) {
     SDL_Surface* gBitmap = SDL_CreateRGBSurfaceFrom(
-            &raw,
-            width,
-            height,
+            raw,
+            src.w,
+            src.h,
             32,
-            width * 4,
+            src.w * 4,
             0x00ff0000,
             0x0000ff00,
             0x000000ff,
@@ -71,7 +77,7 @@ bool blit_bitmap_32bppRGBA(int raw[], int width, int height) {
     else
     {
         //Apply the image
-        SDL_BlitSurface( gBitmap, NULL, gScreenSurface, NULL );
+        SDL_BlitScaled( gBitmap, &src, gScreenSurface, &_screen_rect );
         //Update the surface
         SDL_UpdateWindowSurface( gWindow );
 
