@@ -16,7 +16,7 @@
 
 char keys[] = "x123qweasdzc4rfv";
 const struct timespec frame_delay = {.tv_sec = 0, .tv_nsec = 16000000 };  // 16ms
-const SDL_Rect display_rect = {.w = WIDTH, .h = HEIGHT};
+const SDL_Rect display_rect = {.w = WIDTH, .h = HEIGHT, .x = 0, .y = 0};
 
 unsigned char digits[5 * 16] = {
     0xf0, 0x90, 0x90, 0x90, 0xf0,
