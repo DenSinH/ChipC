@@ -261,8 +261,6 @@ void step(s_interpreter* interpreter) {
             }
             else if ((instruction & 0x00ffu) == 0x00a1u) {
                 // SKNP
-//                printf("key polled: %d\n", interpreter->registers[x]);
-//                printf("key pressed: %d\n", interpreter->keyboard[interpreter->registers[x]]);
                 if (!interpreter->keyboard[interpreter->registers[x]]) {
                     interpreter->pc += 2;
                 }
