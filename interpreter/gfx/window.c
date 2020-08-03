@@ -35,6 +35,8 @@ bool init_display(int width, int height)
         {
             //Get window surface
             gScreenSurface = SDL_GetWindowSurface( gWindow );
+
+            // initialize screen rectangle (target rectangle)
             _screen_rect.x = 0;
             _screen_rect.y = 0;
             _screen_rect.w = width;
@@ -55,7 +57,7 @@ void close_display()
     SDL_Quit();
 }
 
-bool blit_bitmap_32bppRGBA(int raw[], SDL_Rect src) {
+bool blit_bitmap_32bppRGBA(unsigned int raw[], SDL_Rect src) {
     SDL_Surface* gBitmap = SDL_CreateRGBSurfaceFrom(
             raw,
             src.w,
@@ -65,7 +67,7 @@ bool blit_bitmap_32bppRGBA(int raw[], SDL_Rect src) {
             0x00ff0000,
             0x0000ff00,
             0x000000ff,
-            0xff000000
+            0
     );
 
     //Load media
@@ -78,10 +80,12 @@ bool blit_bitmap_32bppRGBA(int raw[], SDL_Rect src) {
     {
         //Apply the image
         SDL_BlitScaled( gBitmap, &src, gScreenSurface, &_screen_rect );
+
         //Update the surface
         SDL_UpdateWindowSurface( gWindow );
 
         SDL_FreeSurface(gBitmap);
+
         return true;
     }
 }

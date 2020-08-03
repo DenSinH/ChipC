@@ -7,16 +7,18 @@
 #include "interpreter.h"
 #include "gfx/window.h"
 
-#define ROM_NAME "./roms/AstroDodge.ch8"
-#define ON_COLOR 0x00ffffffu
+#define LIMIT_FRAMERATE
+
+#define ROM_NAME "./roms/SpaceInvaders.ch8"
+#define ON_COLOR 0xffffffffu
 #define OFF_COLOR 0x00000000u
+#define INSTRS_PER_FRAME 10
 
 char keys[] = "x123qweasdzc4rfv";
 const struct timespec frame_delay = {.tv_sec = 0, .tv_nsec = 16000000 };  // 16ms
-
 const SDL_Rect display_rect = {.w = WIDTH, .h = HEIGHT};
 
-unsigned char digits[] = {
+unsigned char digits[5 * 16] = {
     0xf0, 0x90, 0x90, 0x90, 0xf0,
     0x20, 0x60, 0x20, 0x20, 0x70,
     0xf0, 0x10, 0xf0, 0x80, 0xf0,
@@ -101,9 +103,34 @@ unsigned char wait_for_keypress(s_interpreter* interpreter) {
     }
 }
 
+bool DRW(s_interpreter* interpreter, unsigned int length, unsigned char x, unsigned char y) {
+
+    bool colission = false;
+    int index;
+    for (unsigned char i = 0; i < (unsigned char)length; i++) {
+        for (unsigned char bit_count = 0; bit_count < 8; bit_count++) {
+            index = WIDTH * ((unsigned)(y + i) & (HEIGHT - 1u)) + ((unsigned)(x + bit_count) & (WIDTH - 1u));
+            colission |=
+                    (unsigned)(interpreter->display[index] && interpreter->mem[interpreter->I + i] & (0x80u >> bit_count));
+
+            interpreter->display[index] ^=
+                     (interpreter->mem[interpreter->I + i] & (0x80u >> bit_count)) ? ON_COLOR : OFF_COLOR;
+        }
+    }
+    return colission;
+}
+
+void BCD(s_interpreter* interpreter, unsigned char number) {
+    char dec[4];        // NULL terminator
+    sprintf(dec, "%03d", number);
+
+    for (int i = 0; i < 3; i++) {
+        interpreter->mem[interpreter->I + i] = dec[i] - '0';
+    }
+}
+
 void step(s_interpreter* interpreter) {
     unsigned short instruction = (unsigned)(interpreter->mem[interpreter->pc++] << 8u) | interpreter->mem[interpreter->pc++];
-    // printf("Instruction: %x\n", instruction);
 
     char x = (char)((instruction & 0x0f00u) >> 8u);
     char y = (char)((instruction & 0x00f0u) >> 4u);
@@ -112,6 +139,7 @@ void step(s_interpreter* interpreter) {
         case 0x0u:
             if (instruction == 0x00e0) {
                 // CLS
+                memset(interpreter->display, 0x00, sizeof(interpreter->display));
             }
             else if (instruction == 0x00ee) {
                 // RET
@@ -151,7 +179,7 @@ void step(s_interpreter* interpreter) {
             break;
         case 0x7u:
             // ADD
-            interpreter->registers[x] += (instruction & 0xffu);
+            interpreter->registers[x] += (unsigned char)(instruction & 0xffu);
             break;
         case 0x8u:
             switch (instruction & 0x000fu) {
@@ -220,10 +248,11 @@ void step(s_interpreter* interpreter) {
             interpreter->registers[x] = rand() & instruction & 0xffu;
             break;
         case 0xdu:
-            // todo: DRW
-            printf("draw at (%x, %x)", x, y);
+            interpreter->registers[0xf] =
+                    DRW(interpreter, instruction & 0x000fu, interpreter->registers[x], interpreter->registers[y]) ? 1 : 0;
             break;
         case 0xeu:
+
             if ((instruction & 0x00ffu) == 0x009eu) {
                 // SKP
                 if (interpreter->keyboard[interpreter->registers[x]]) {
@@ -232,7 +261,9 @@ void step(s_interpreter* interpreter) {
             }
             else if ((instruction & 0x00ffu) == 0x00a1u) {
                 // SKNP
-                if (interpreter->keyboard[interpreter->registers[x]]) {
+//                printf("key polled: %d\n", interpreter->registers[x]);
+//                printf("key pressed: %d\n", interpreter->keyboard[interpreter->registers[x]]);
+                if (!interpreter->keyboard[interpreter->registers[x]]) {
                     interpreter->pc += 2;
                 }
             }
@@ -269,7 +300,8 @@ void step(s_interpreter* interpreter) {
                     interpreter->I = 5 * interpreter->registers[x];
                     break;
                 case 0x33u:
-                    // todo: LD B (BCD)
+                    // BCD
+                    BCD(interpreter, interpreter->registers[x]);
                     break;
                 case 0x55u:
                     // LD [I]
@@ -315,6 +347,7 @@ int run(s_interpreter* interpreter) {
                             break;
                         }
                     }
+                    break;
                 case SDL_KEYUP:
                     for (int i = 0; i < 16; i++) {
                         if (keys[i] == SDL_GetKeyFromScancode(e.key.keysym.scancode)) {
@@ -322,15 +355,28 @@ int run(s_interpreter* interpreter) {
                             break;
                         }
                     }
+                    break;
                 default:
                     break;
             }
         }
 
-        step(interpreter);
+        for (int i = 0; i < INSTRS_PER_FRAME; i++) {
+            step(interpreter);
+        }
+
+        if (interpreter->dt) {
+            interpreter->dt--;
+        }
+
+        if (interpreter->st) {
+            interpreter->st--;
+        }
 
         blit_bitmap_32bppRGBA(interpreter->display, display_rect);
+#ifdef LIMIT_FRAMERATE
         nanosleep(&frame_delay, NULL);
+#endif
     }
 
     close_display();

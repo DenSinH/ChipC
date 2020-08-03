@@ -11,7 +11,7 @@
 #define SCREEN_HEIGHT (HEIGHT * SCALE)
 
 typedef struct {
-    unsigned int registers[16];
+    unsigned char registers[16];
     unsigned short I;
     unsigned char dt, st;
     unsigned short pc;
@@ -19,7 +19,7 @@ typedef struct {
     unsigned short sp;  // we put the stack in the lower 0x200 bytes of the memory (should be enough I reckon)
 
     unsigned char mem[0x1000];
-    int display[WIDTH * HEIGHT];
+    unsigned int display[WIDTH * HEIGHT];
     bool keyboard[16];
 } s_interpreter;
 
